@@ -215,7 +215,7 @@ class Program
         Console.WriteLine($"Hello User {userID}");
         foreach (var hotel in recommendation.ItemList)
         {
-            Console.WriteLine($"Amazon Personlize recommnds the following hotel for you {hotel.ItemId}");
+            Console.WriteLine($"Amazon Personlize recommends the following hotel for you {hotel.ItemId}");
         }
     }
 }
