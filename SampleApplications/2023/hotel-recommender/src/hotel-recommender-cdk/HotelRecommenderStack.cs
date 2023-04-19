@@ -10,7 +10,7 @@ namespace HotelRecommender
 {
     public class HotelRecommenderStack : Stack
     {
-        public readonly string LOGICALID = "hotel-picker";
+        public readonly string LOGICALID = "bjhogan-hotel-picker";
         internal HotelRecommenderStack(App scope, string id, IStackProps props = null) : base(scope, id, props)
         {
 

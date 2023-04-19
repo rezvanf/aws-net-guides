@@ -21,7 +21,7 @@ The Hotel Recommender app consists of two .NET 6 C# projects
 
 AWS CDK is a framwork for provisioning cloud infrastructure in CloudFormation via a choice of several programming languages.
 
-You can find out more about AWS CDK [here](https://docs.aws.amazon.com/cdk/v2/guide/home.html)
+You can find out more about AWS CDK [here](https://docs.aws.amazon.com/cdk/v2/guide/home.html).
 
 You should explore the contents of the hotel-recommender-cdk project. It provides a CDK app with an instance of the stack `HotelRecommenderStack` to provision the infrastructure needed for Hotel Recommender.
 
@@ -55,7 +55,7 @@ Type `y` in the terminal and press enter
 
 ## Console app
 
-To run the console app please ensure ensure you first run the CDK project as provided in the instructions above
+To run the console app please ensure ensure you first run the CDK project as provided in the instructions above.
 
 ### Initial Run
 
@@ -75,7 +75,7 @@ To run the app first time run with the (`-i`) command line argument in the direc
     dotnet run -i
 ```
 ​
-The app will run through the above steps, waiting and checking until the step  is (`ACTIVE`) before moving on to the next. The app provides (`-t`) flag to allow a developer to specify in milliseconds how long to wait. 
+The app will run through the above steps, waiting and checking until the step is (`ACTIVE`) before moving on to the next. The app provides (`-t`) flag to allow a developer to specify in milliseconds how long to wait. 
 ​
 
 To run the app with a wait time of 30 seconds, run the app with the following command line argument
