@@ -14,7 +14,7 @@ namespace hotel_recommender;
 class Program
 {
 
-    public static readonly string LOGICALID = "hotel-picker";
+    public static readonly string LOGICALID = "bjhogan-hotel-picker";
     public static string? AccountID;
     public static string? Region;
 
