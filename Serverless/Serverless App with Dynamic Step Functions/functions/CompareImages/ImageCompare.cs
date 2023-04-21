@@ -1,90 +1,79 @@
-// <copyright file="ImageCompare.cs" company="PlaceholderCompany">
-// Copyright (c) PlaceholderCompany. All rights reserved.
-// </copyright>
+using System;
+using System.Threading.Tasks;
+using Amazon.Rekognition;
+using Amazon.Rekognition.Model;
 
-namespace CompareImages
+namespace CompareImages;
+
+public class ImageCompare
 {
-    using Amazon.Rekognition;
-    using Amazon.Rekognition.Model;
+	private IAmazonRekognition RekognitionClient { get; set; }
 
-    public class ImageCompare
-    {
-        public ImageCompare() => this.RekognitionClient = new AmazonRekognitionClient();
+	public ImageCompare()
+	{
+		RekognitionClient = new AmazonRekognitionClient();
+	}
 
-        public ImageCompare(IAmazonRekognition client) => this.RekognitionClient = client;
+	public ImageCompare(IAmazonRekognition client)
+	{
+		RekognitionClient = client;
+	}
 
-        private IAmazonRekognition RekognitionClient { get; set; }
-
-        public async Task<FaceComparison> CompareFacesAsync(string batchId, string sourceBucketName, string sourceImage, string targetBucketName, string targetImage)
-        {
-            float similarityThreshold = 70F;
-
-            Amazon.Rekognition.Model.Image imageSource = new Amazon.Rekognition.Model.Image();
-            try
-            {
-                imageSource.S3Object = new S3Object()
-                {
-                    Name = sourceImage,
-                    Bucket = sourceBucketName,
-                };
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to load source image: " + sourceImage);
-                throw;
-            }
-
-            Amazon.Rekognition.Model.Image imageTarget = new Amazon.Rekognition.Model.Image();
-            try
-            {
-                imageTarget.S3Object = new S3Object()
-                {
-                    Name = targetImage,
-                    Bucket = targetBucketName,
-                };
-            }
-            catch (Exception)
-            {
-                Console.WriteLine("Failed to load target image: " + targetImage);
-                throw;
-            }
-
-            CompareFacesRequest compareFacesRequest = new CompareFacesRequest()
-            {
-                SourceImage = imageSource,
-                TargetImage = imageTarget,
-                SimilarityThreshold = similarityThreshold,
-            };
-            Console.WriteLine("About to start comparison faces");
-
-            // Call operation
-            CompareFacesResponse compareFacesResponse;
-            FaceComparison faceComparison = new FaceComparison(batchId, sourceImage, targetImage);
-
-            try
-            {
-                compareFacesResponse = await this.RekognitionClient.CompareFacesAsync(compareFacesRequest);
-            }
-            catch (Amazon.Rekognition.Model.InvalidParameterException e)
-            {
-                Console.WriteLine("Failed to compare faces as the image does not contain a face : " + e);
-                return faceComparison; 
-            }   
-
-            // Display results
-            foreach (CompareFacesMatch match in compareFacesResponse.FaceMatches)
-            {
-                ComparedFace face = match.Face;
-                BoundingBox position = face.BoundingBox;
-                Console.WriteLine("Face at " + position.Left
-                    + " " + position.Top
-                    + " matches with " + match.Similarity
-                    + "% confidence.");
-
-                faceComparison.Results.Add(new FaceComparison.ComparisonResult(position.Left, position.Top, match.Similarity));
-            }
-
-            return faceComparison;
-        }
-    }
+	public async Task<FaceComparisonResult> CompareFacesAsync(string sourceBucketName, string sourceImage, string targetBucketName, string targetImage)
+	{
+		float similarityThreshold = 70f;
+		Image image = new Image();
+		try
+		{
+			image.S3Object = new S3Object
+			{
+				Name = sourceImage,
+				Bucket = sourceBucketName
+			};
+		}
+		catch (Exception)
+		{
+			Console.WriteLine("Failed to load source image: " + sourceImage);
+			throw;
+		}
+		Image image2 = new Image();
+		try
+		{
+			image2.S3Object = new S3Object
+			{
+				Name = targetImage,
+				Bucket = targetBucketName
+			};
+		}
+		catch (Exception)
+		{
+			Console.WriteLine("Failed to load target image: " + targetImage);
+			throw;
+		}
+		CompareFacesRequest request = new CompareFacesRequest
+		{
+			SourceImage = image,
+			TargetImage = image2,
+			SimilarityThreshold = similarityThreshold
+		};
+		Console.WriteLine("About to start comparison faces");
+		FaceComparisonResult faceComparison = new FaceComparisonResult(targetImage);
+		CompareFacesResponse compareFacesResponse;
+		try
+		{
+			compareFacesResponse = await RekognitionClient.CompareFacesAsync(request);
+		}
+		catch (InvalidParameterException ex3)
+		{
+			Console.WriteLine("Failed to compare faces as the image does not contain a face : " + (object)ex3);
+			return faceComparison;
+		}
+		foreach (CompareFacesMatch faceMatch in compareFacesResponse.FaceMatches)
+		{
+			BoundingBox boundingBox = faceMatch.Face.BoundingBox;
+			Console.WriteLine("Face at " + boundingBox.Left + " " + boundingBox.Top + " matches with " + faceMatch.Similarity + "% confidence.");
+			faceComparison.Results.Add(new ComparisonResult(boundingBox.Left, boundingBox.Top, faceMatch.Similarity));
+		}
+		return faceComparison;
+	}
 }

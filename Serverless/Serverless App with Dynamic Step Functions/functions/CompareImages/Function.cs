@@ -19,17 +19,26 @@ namespace CompareImages
 
         private ImageCompare ImageCompare { get; set; }
 
-        public async Task<FaceComparison> FunctionHandler(FaceComparisonRequest objectEvent, ILambdaContext context)
+        public async Task<FaceComparisonReponse> FunctionHandler(Root items, ILambdaContext context)
         {
-            Console.WriteLine("Target Image is {0}", objectEvent.TargetImage);
-
+            Console.WriteLine("Request count is {0}", items.Items.Count);
             try
             {
-                return await this.ImageCompare.CompareFacesAsync(objectEvent.BatchId, objectEvent.SourceBucketName, objectEvent.SourceImage, objectEvent.TargetBucketName, objectEvent.TargetImage);
+                FaceComparisonReponse response = new FaceComparisonReponse(items.Items.First().SourceImage);
+                foreach (FaceComparisonRequest item in items.Items)
+                {
+                    Console.WriteLine("Target Image is {0}", item.TargetImage);
+                    FaceComparisonResult faceComparisonResult = await ImageCompare.CompareFacesAsync(item.SourceBucket, item.SourceImage, item.TargetBucket, item.TargetImage);
+                    if (faceComparisonResult.Results.Count > 0)
+                    {
+                        response.Results.Add(faceComparisonResult);
+                    }
+                }
+                return response;
             }
-            catch (Exception e)
+            catch (Exception arg)
             {
-                Console.Error.WriteLine("Exception occured while comparing faces {0}", e);
+                Console.Error.WriteLine("Exception occured while comparing faces {0}", arg);
                 throw;
             }
         }
