@@ -21,13 +21,27 @@
             "Type": "Map",
             "ItemsPath": "$.faceComparisonRequest",
             "MaxConcurrency": 0,
-            "ResultPath": "$.facematch",
             "Iterator": {
                 "StartAt": "CompareImagesStep",
                 "States": {
                     "CompareImagesStep": {
                         "Type": "Task",
-                        "Resource": "${CompareImagesFunctionArn}",
+                        "Resource": "arn:aws:states:::aws-sdk:rekognition:compareFaces",
+                        "Parameters": {
+                            "SimilarityThreshold": "70",
+                            "SourceImage": {
+                                "S3Object": {
+                                    "Bucket.$": "$.sourceBucketName",
+                                    "Name.$": "$.sourceImage"
+                                }
+                            },
+                            "TargetImage": {
+                                "S3Object": {
+                                    "Bucket.$": "$.targetBucketName",
+                                    "Name.$": "$.targetImage"
+                                }
+                            }
+                        },
                         "Catch": [
                             {
                                 "ErrorEquals": [
@@ -36,19 +50,24 @@
                                 "Next": "ProcessTaskErrorFallback"
                             }
                         ],
+                        "ResultSelector": {
+                            "FaceMatchesCount.$": "States.ArrayLength($.FaceMatches)",
+                            "Input.$": "$"
+                        },
+                        "ResultPath": "$.Result",
                         "Next": "CheckIfMatchFound"
-                    },
+                    },                    
                     "CheckIfMatchFound": {
                         "Type": "Choice",
                         "Choices": [
                             {
-                                "Variable": "$.hasResults",
-                                "BooleanEquals": true,
+                                "Variable": "$.Result.FaceMatchesCount",
+                                "NumericGreaterThan": 0,
                                 "Next": "Record Transaction"
                             },
                             {
-                                "Variable": "$.hasResults",
-                                "BooleanEquals": false,
+                                "Variable": "$.Result.FaceMatchesCount",
+                                "NumericEquals": 0,
                                 "Next": "Skip"
                             }
                         ]
@@ -69,10 +88,10 @@
                                     "S.$": "$.targetImage"
                                 },
                                 "BatchID": {
-                                    "S.$": "$.batchId"
+                                    "S.$": "States.UUID()"
                                 },
                                 "Result": {
-                                    "S.$": "States.JsonToString($.results)"
+                                    "S.$": "States.JsonToString($)"
                                 }
                             }
                         },
@@ -92,18 +111,20 @@
                         "Type": "Fail",
                         "Cause": "Error when processing a task"
                     }
-                }
+                }                
             },
+            "ResultPath": null,
+            "OutputPath": "$.faceComparisonRequest[0]",
             "Next": "CopyObject"
         },
         "CopyObject": {
             "Type": "Task",
             "Next": "DeleteObject",
-            "ResultPath": "$.taskresult",
+            "ResultPath": null,
             "Parameters": {
                 "Bucket": "${ProcessedBucketName}",
-                "CopySource.$": "States.Format('photos-source-images/{}',$.faceComparisonRequest[0].sourceImage)",
-                "Key.$": "$.faceComparisonRequest[0].sourceImage"
+                "CopySource.$": "States.Format('photos-source-images/{}',$.sourceImage)",
+                "Key.$": "$.sourceImage"
             },
             "Resource": "arn:aws:states:::aws-sdk:s3:copyObject"
         },
@@ -112,9 +133,9 @@
             "End": true,
             "Resource": "arn:aws:states:::aws-sdk:s3:deleteObject",
             "Parameters": {
-              "Bucket": "${UploadBucketName}",
-              "Key.$": "$.faceComparisonRequest[0].sourceImage"
+                "Bucket": "${UploadBucketName}",
+                "Key.$": "$.sourceImage"
             }
-          }
+        }
     }
 }

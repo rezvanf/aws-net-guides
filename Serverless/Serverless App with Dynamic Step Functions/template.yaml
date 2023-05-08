@@ -9,6 +9,13 @@ Resources:
   CompareFacesStateMachine:
     Type: AWS::Serverless::StateMachine # More info about State Machine Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-statemachine.html
     Properties:
+      Name:
+        Fn::Join:
+        - ''
+        - - Ref: AWS::AccountId
+          - '-'
+          - Ref: AWS::Region
+          - -compare-faces-state-machine
       DefinitionUri: statemachine/compareFacesStateMachine.asl.json
       DefinitionSubstitutions:
         GetTargetImagesFunctionArn: !GetAtt GetTargetImagesFunction.Arn
@@ -40,8 +47,19 @@ Resources:
             TableName: !Ref FaceComparisonTable
         - S3CrudPolicy:
             BucketName: !Ref UploadBucket
+        - S3ReadPolicy:
+            BucketName: photos-target-images
         - S3WritePolicy:
             BucketName: !Ref ProcessedBucket
+        - RekognitionFacesPolicy:
+            Resource:
+              Fn::Join:
+              - ''
+              - - Ref: AWS::AccountId
+                - '-'
+                - Ref: AWS::Region
+                - -compare-faces-state-machine
+      
 
   GetTargetImagesFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
